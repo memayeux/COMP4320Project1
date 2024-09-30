@@ -1,6 +1,6 @@
 public class Request {
     public int tml;            // Total message length (in bytes)
-    public int opCode;       // Desired operation code
+    public int opCode;         // Desired operation code
     public int op1;            // First operand
     public int op2;            // Second operand
     public int requestID;      // Differentiates requests
@@ -19,27 +19,37 @@ public class Request {
     }
 
     public String toString() {
-        /*
         final String EOLN = java.lang.System.getProperty("line.separator");
-        String value = "Friend # = " + ID + EOLN +
-            "Lastname = " + lastName + EOLN +
-            "Street#  = " + streetNumber + EOLN +
-            "Zip Code = " + zipCode + EOLN;
-    if (single)
-	value += "Single" + EOLN;
-    else
-	value += "Married" + EOLN;
-
-    if (rich)
-	value += "Rich" + EOLN;
-    else
-	value += "Poor" + EOLN;
-    
-    if (female)
-	value += "Female" + EOLN;
-    else
-	value += "Male" + EOLN;
-    return value;
-    */
+        String value = op1 + EOLN + opCodeTable(opCode)+ op2 + EOLN;
+        return value;
     }
+
+
+    public char opCodeTable(int opCode) {
+        char operator;
+        switch (opCode) {
+            case 0:
+                operator = '/';
+                break;
+            case 1:
+                operator = '*';
+                break;
+            case 2:
+                operator = '&';
+                break;
+            case 3:
+                operator = '|';
+                break;
+            case 4:
+                operator = '+';
+                break;
+            case 5:
+                operator = '-';
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown operand");
+        }
+        return operator;
+    }
+
 }
