@@ -13,8 +13,9 @@ public class ServerUDP {
             throw new IllegalArgumentException("Parameter: <portnumber>");
         }
         int port = Integer.parseInt(args[0]);   // Receiving Port
+        // Dest port and address created later on...
 
-        DatagramSocket sock = new DatagramSocket(port);  // UDP socket for receiving
+        DatagramSocket sock = new DatagramSocket(port);  // UDP socket
     
     do {
         // Response ID:

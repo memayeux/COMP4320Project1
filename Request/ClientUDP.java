@@ -19,8 +19,9 @@ public class ClientUDP {
     }
     InetAddress destAddr = InetAddress.getByName(args[0]);  // Destination address
     int destPort = Integer.parseInt(args[1]);               // Destination port
+    int recvPort = 10054;                                   // Recieving port, group #
 
-    DatagramSocket sock = new DatagramSocket(); // UDP socket for sending
+    DatagramSocket sock = new DatagramSocket(recvPort); // UDP socket
 
     do {
       // Initializing
@@ -82,6 +83,18 @@ public class ClientUDP {
       DatagramPacket message = new DatagramPacket(codedRequest, codedRequest.length,
 				destAddr, destPort);
       sock.send(message);
+
+      // Waits to recieve a response from server
+      DatagramPacket packet = new DatagramPacket(new byte[1024], 1024);
+      sock.receive(packet);
+
+      // Decode response
+      ResponseDecoder decoder = new ResponseDecoderBin();
+      Response recievedRespnose = decoder.decode(packet);
+
+      // Signal that response is recieved
+      System.out.println("Received Binary-Encoded Response");
+      System.out.println(recievedRespnose);
 
       // Asks the user for continue/quit
       System.out.println("Continue sending? (y/n)");
