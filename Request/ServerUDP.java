@@ -1,4 +1,3 @@
-// for DatagramSocket and DatagramPacket
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -6,99 +5,73 @@ import java.util.Scanner;
 
 public class ServerUDP {
     public static void main(String[] args) throws Exception {
-        Boolean cont = true;
+        boolean cont = true;
 
         // Verifying args
         if (args.length != 1) {
             throw new IllegalArgumentException("Parameter: <portnumber>");
         }
         int port = Integer.parseInt(args[0]);   // Receiving Port
-        // Dest port and address created later on...
 
         DatagramSocket sock = new DatagramSocket(port);  // UDP socket
-    
-    do {
-        // Response ID:
-        byte tempResponseID = 1;
 
-        // Receiving packet
-        DatagramPacket packet = new DatagramPacket(new byte[1024],1024);
-        sock.receive(packet);
-    
-        // Decode binary-encoded request
-        RequestDecoder decoder = new RequestDecoderBin();
-        Request receivedRequest = decoder.decode(packet);
+        Scanner s = new Scanner(System.in);  // Scanner for server termination prompt
 
-        // Signal that request is received
-        System.out.println("Received Binary-Encoded Request");
-        System.out.println(receivedRequest);
+        do {
+            // Response ID:
+            byte tempResponseID = 1;
 
-        // Server calculations to be sent back to client (result):
-        int result;
-        switch (receivedRequest.opCode) {
-            case 0:
-                // Division case '/'
-                result = receivedRequest.op1 / receivedRequest.op2;
-                break;
-            case 1:
-                // Multiplication case '*'
-                result = receivedRequest.op1 * receivedRequest.op2;
-                break;
-            case 2:
-                // Bitwise AND case '&'
-                result = receivedRequest.op1 & receivedRequest.op2;
-                break;
-            case 3:
-                // Bitwise OR case '|'
-                result = receivedRequest.op1 | receivedRequest.op2;
-                break;
-            case 4:
-                // Addition case '+'
-                result = receivedRequest.op1 + receivedRequest.op2;
-                break;
-            case 5:
-                // Subtraction case '-'
-                result = receivedRequest.op1 - receivedRequest.op2;
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown operand");
-        }
+            // Receiving packet
+            DatagramPacket packet = new DatagramPacket(new byte[1024], 1024);
+            sock.receive(packet);
 
-        // Determine error code:
-        byte tempErrorCode;
-        if (receivedRequest.tml == (short) (9 + receivedRequest.opNameLength)) {
-            tempErrorCode = 0;
-        } else {
-            tempErrorCode = 127;
-        }
+            // Decode binary-encoded request
+            RequestDecoder decoder = new RequestDecoderBin();
+            Request receivedRequest = decoder.decode(packet);
 
-        // Creates new response object to be sent
-        Response response = new Response((short)8, tempResponseID, result, tempErrorCode);
+            // Signal that request is received
+            System.out.println("Received Request:");
+            System.out.println(receivedRequest);
 
-        // Encodes response object
-        ResponseEncoder encoder = new ResponseEncoderBin();
-        byte[] codedResponse = encoder.encode(response);
+            // Server calculations (result):
+            int result;
+            switch (receivedRequest.opCode) {
+                case 0: result = receivedRequest.op1 / receivedRequest.op2; break;
+                case 1: result = receivedRequest.op1 * receivedRequest.op2; break;
+                case 2: result = receivedRequest.op1 & receivedRequest.op2; break;
+                case 3: result = receivedRequest.op1 | receivedRequest.op2; break;
+                case 4: result = receivedRequest.op1 + receivedRequest.op2; break;
+                case 5: result = receivedRequest.op1 - receivedRequest.op2; break;
+                default: throw new IllegalArgumentException("Unknown operand");
+            }
 
-        // Gets client address and port
-        InetAddress clientAddr = packet.getAddress();
-        int clientPort = packet.getPort();
+            // Determine error code
+            byte tempErrorCode = (receivedRequest.tml == (short) (9 + receivedRequest.opNameLength)) ? (byte) 0 : 127;
 
-        // Creates Datagram packet with the response in bytes, then sends
-        DatagramPacket sendPacket = new DatagramPacket(codedResponse, codedResponse.length,
-            clientAddr, clientPort);
-        sock.send(sendPacket);
+            // Create response
+            Response response = new Response((short) 8, tempResponseID, result, tempErrorCode);
 
-        // Verifies keeping server open
-        Scanner s = new Scanner(System.in);
-        System.out.println("Keep server open? (y/n)");
-        String yesNo = s.nextLine();
-        if (yesNo != "y") {
-            cont = false;
-        }
-        tempResponseID++;
+            // Encode and send response
+            ResponseEncoder encoder = new ResponseEncoderBin();
+            byte[] codedResponse = encoder.encode(response);
+
+            // Send response to client
+            InetAddress clientAddr = packet.getAddress();
+            int clientPort = packet.getPort();
+            DatagramPacket sendPacket = new DatagramPacket(codedResponse, codedResponse.length, clientAddr, clientPort);
+            sock.send(sendPacket);
+
+            // Verifies keeping server open
+            System.out.println("Keep server open? (y/n)");
+            String yesNo = s.nextLine();
+            if (!yesNo.equals("y")) {
+                cont = false;
+            }
+
+            tempResponseID++;
+
+        } while (cont);
+        sock.close();
         s.close();
-        
-    } while (cont == true);
-    sock.close();
     }
 }
